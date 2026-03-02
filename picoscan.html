@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Picoscan — flandreiii</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #050709;
+      --surface:  #0b0e13;
+      --card:     #0e1219;
+      --border:   #182030;
+      --accent:   #00ffa3;
+      --accent2:  #00c8ff;
+      --warn:     #ff6b35;
+      --text:     #cdd8ee;
+      --muted:    #445566;
+      --glow-a:   rgba(0,255,163,.18);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none}
+
+    /* Cursor */
+    #cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s}
+    #cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,255,163,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
+
+    /* BG grid */
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,163,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,163,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+    body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,255,163,.07) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px}
+
+    /* Header */
+    header{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:18px 48px;background:rgba(5,7,9,.8);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);transition:padding .3s}
+    .logo{font-family:'Space Mono',monospace;font-size:.95rem;color:var(--accent);letter-spacing:.06em;display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-icon{width:28px;height:28px;border:1.5px solid var(--accent);border-radius:4px;display:grid;place-items:center;position:relative;overflow:hidden}
+    .logo-icon::after{content:'';position:absolute;left:0;right:0;height:1.5px;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:logoScan 1.6s ease-in-out infinite}
+    @keyframes logoScan{0%{top:4px}100%{top:22px}}
+    nav{display:flex;gap:32px;align-items:center}
+    nav a{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    nav a:hover{color:var(--accent)}
+    .nav-gh{padding:8px 18px;border:1px solid var(--border);border-radius:4px;color:var(--text)!important;display:flex;align-items:center;gap:8px;transition:border-color .2s,color .2s!important}
+    .nav-gh:hover{border-color:var(--accent);color:var(--accent)!important}
+
+    /* Hero */
+    .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:140px 40px 80px;position:relative;z-index:1}
+    .hero-eyebrow{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.35em;text-transform:uppercase;color:var(--accent);margin-bottom:28px;opacity:0;animation:fadeUp .7s .1s forwards}
+    .hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,15vw,11rem);letter-spacing:.04em;line-height:.9;margin-bottom:16px;opacity:0;animation:fadeUp .7s .25s forwards}
+    .hero-title .outline{-webkit-text-stroke:1.5px var(--accent);color:transparent}
+    .hero-sub{font-family:'Space Mono',monospace;font-size:.8rem;letter-spacing:.12em;color:var(--muted);margin-bottom:36px;opacity:0;animation:fadeUp .7s .4s forwards}
+    .hero-desc{max-width:500px;font-size:1rem;line-height:1.75;color:#8899bb;margin-bottom:52px;opacity:0;animation:fadeUp .7s .55s forwards}
+    .hero-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeUp .7s .7s forwards}
+
+    /* Buttons */
+    .btn{font-family:'Space Mono',monospace;font-size:.78rem;letter-spacing:.06em;padding:14px 30px;border-radius:4px;text-decoration:none;cursor:none;display:inline-flex;align-items:center;gap:8px;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s,color .2s;border:1px solid transparent}
+    .btn-primary{background:var(--accent);color:#000;font-weight:700;border-color:var(--accent)}
+    .btn-primary:hover{transform:translateY(-3px);box-shadow:0 12px 32px var(--glow-a);background:#fff;border-color:#fff}
+    .btn-ghost{background:transparent;color:var(--text);border-color:var(--border)}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-3px)}
+
+    /* Scanner visual */
+    .scanner-visual{position:relative;width:240px;height:240px;margin:64px auto 0;opacity:0;animation:fadeUp .7s .85s forwards}
+    .scan-box{width:100%;height:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;position:relative;overflow:hidden;display:grid;place-items:center}
+    .c{position:absolute;width:22px;height:22px;border-color:var(--accent);border-style:solid}
+    .c.tl{top:10px;left:10px;border-width:2px 0 0 2px}
+    .c.tr{top:10px;right:10px;border-width:2px 2px 0 0}
+    .c.bl{bottom:10px;left:10px;border-width:0 0 2px 2px}
+    .c.br{bottom:10px;right:10px;border-width:0 2px 2px 0}
+    .scan-line{position:absolute;left:12px;right:12px;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 14px var(--accent),0 0 30px var(--glow-a);animation:scanLine 2.2s ease-in-out infinite alternate}
+    @keyframes scanLine{from{top:14px;opacity:1}to{top:calc(100% - 16px);opacity:.6}}
+    .qr-grid{display:grid;grid-template-columns:repeat(7,18px);grid-template-rows:repeat(7,18px);gap:3px;opacity:.18}
+    .qr-cell{border-radius:2px}
+    .qr-cell.on{background:var(--accent)}
+
+    /* Stats */
+    .stats{display:flex;justify-content:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;z-index:1}
+    .stat{flex:1;max-width:260px;text-align:center;padding:40px 20px;border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background .3s}
+    .stat:last-child{border-right:none}
+    .stat::before{content:'';position:absolute;inset:0;background:var(--accent);opacity:0;transition:opacity .3s}
+    .stat:hover::before{opacity:.04}
+    .stat-num{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--accent);display:block;line-height:1;margin-bottom:8px}
+    .stat-label{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+
+    /* Sections */
+    .section{padding:100px 48px;max-width:1140px;margin:0 auto;position:relative;z-index:1}
+    .section-tag{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+    .section-heading{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.4rem,5vw,4rem);letter-spacing:.04em;line-height:1;margin-bottom:60px}
+    .section-heading em{font-style:normal;-webkit-text-stroke:1px var(--accent);color:transparent}
+
+    /* Features */
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px}
+    .feat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:36px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s;opacity:0;transform:translateY(24px)}
+    .feat-card.reveal{animation:fadeUp .6s forwards}
+    .feat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
+    .feat-card:hover{transform:translateY(-6px);border-color:rgba(0,255,163,.25);box-shadow:0 24px 48px rgba(0,0,0,.5),0 0 40px var(--glow-a)}
+    .feat-card:hover::after{opacity:1}
+    .feat-icon{width:48px;height:48px;border-radius:8px;background:rgba(0,255,163,.08);border:1px solid rgba(0,255,163,.2);display:grid;place-items:center;margin-bottom:24px;font-size:1.4rem}
+    .feat-title{font-family:'Space Mono',monospace;font-size:.9rem;font-weight:700;margin-bottom:12px;color:#fff}
+    .feat-desc{font-size:.9rem;line-height:1.7;color:#556677}
+
+    /* Install */
+    .install-wrap{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+    @media(max-width:780px){.install-wrap{grid-template-columns:1fr}}
+    .install-text p{font-size:.95rem;line-height:1.8;color:#667788;margin-bottom:16px}
+    .code-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+    .code-header{padding:12px 18px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .code-header span{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+    .copy-btn{font-family:'Space Mono',monospace;font-size:.68rem;letter-spacing:.1em;background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 12px;border-radius:3px;cursor:none;transition:border-color .2s,color .2s}
+    .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+    pre{padding:24px 20px;font-family:'Space Mono',monospace;font-size:.8rem;line-height:1.8;overflow-x:auto}
+    .c-dim{color:var(--muted)}
+    .c-acc{color:var(--accent)}
+    .c-blue{color:var(--accent2)}
+    .c-warn{color:var(--warn)}
+
+    /* Stack */
+    .stack-grid{display:flex;flex-wrap:wrap;gap:12px}
+    .stack-badge{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.1em;padding:8px 16px;border-radius:4px;background:var(--card);border:1px solid var(--border);color:var(--muted);transition:border-color .2s,color .2s}
+    .stack-badge:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* Footer */
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:40px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+    .footer-left{font-family:'Space Mono',monospace;font-size:.72rem;letter-spacing:.08em;color:var(--muted)}
+    .footer-left a{color:var(--accent);text-decoration:none}
+    .footer-links{display:flex;gap:24px}
+    .footer-links a{font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .2s}
+    .footer-links a:hover{color:var(--accent)}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+    @media(max-width:640px){
+      header{padding:16px 24px}
+      nav a:not(.nav-gh){display:none}
+      .section{padding:70px 24px}
+      .stats{flex-wrap:wrap}
+      .stat{min-width:50%;border-right:none;border-bottom:1px solid var(--border)}
+      footer{padding:28px 24px;flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <rect x="1" y="1" width="5" height="5" stroke="#00ffa3" stroke-width="1.2"/>
+        <rect x="8" y="1" width="5" height="5" stroke="#00ffa3" stroke-width="1.2"/>
+        <rect x="1" y="8" width="5" height="5" stroke="#00ffa3" stroke-width="1.2"/>
+        <rect x="9.5" y="9.5" width="2" height="2" fill="#00ffa3"/>
+      </svg>
+    </div>
+    PICOSCAN
+  </a>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+    <a href="#stack">Stack</a>
+    <a class="nav-gh" href="https://github.com/flandreiii/Picoscan" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.78-.25.78-.55v-2c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.1 11.1 0 0 1 2.89-.39c.98.01 1.97.13 2.89.39 2.2-1.49 3.16-1.18 3.16-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.79 1.06.79 2.14v3.18c0 .3.2.66.79.55C20.22 21.4 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">⬡ flandreiii / Picoscan</p>
+  <h1 class="hero-title">PICO<br><span class="outline">SCAN</span></h1>
+  <p class="hero-sub">// scan fast. scan smart. scan everything.</p>
+  <p class="hero-desc">
+    A lightweight, blazing-fast scanning tool built for developers.
+    Minimal footprint, maximum precision — the scanner that gets out of your way.
+  </p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="https://github.com/flandreiii/Picoscan" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.78-.25.78-.55v-2c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.25.72-1.53-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.1 11.1 0 0 1 2.89-.39c.98.01 1.97.13 2.89.39 2.2-1.49 3.16-1.18 3.16-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.79 1.06.79 2.14v3.18c0 .3.2.66.79.55C20.22 21.4 23.5 17.09 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+      View on GitHub
+    </a>
+    <a class="btn btn-ghost" href="#install">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+      Install
+    </a>
+  </div>
+
+  <!-- Scanner animation -->
+  <div class="scanner-visual">
+    <div class="scan-box">
+      <div class="c tl"></div>
+      <div class="c tr"></div>
+      <div class="c bl"></div>
+      <div class="c br"></div>
+      <div class="scan-line"></div>
+      <div class="qr-grid" id="qrGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-num" data-target="100">0</span>
+    <span class="stat-label">% Open Source</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="startupStat">~5ms</span>
+    <span class="stat-label">Startup Time</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" data-target="0">~0</span>
+    <span class="stat-label">Dependencies</span>
+  </div>
+  <div class="stat">
+    <span class="stat-num" data-target="24">0</span>
+    <span class="stat-label">/7 Available</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <p class="section-tag">// what it does</p>
+  <h2 class="section-heading">Built for <em>Speed</em><br>& Precision</h2>
+  <div class="features-grid">
+    <div class="feat-card">
+      <div class="feat-icon">⚡</div>
+      <p class="feat-title">LIGHTNING FAST</p>
+      <p class="feat-desc">Starts instantly, scans without lag. Zero overhead means results in milliseconds — no bloat, no waiting.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🎯</div>
+      <p class="feat-title">HIGH ACCURACY</p>
+      <p class="feat-desc">Advanced parsing ensures precise output every time. Handles edge cases, malformed input, and noisy data with ease.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🧩</div>
+      <p class="feat-title">MODULAR DESIGN</p>
+      <p class="feat-desc">Plug-and-play architecture. Use only what you need. Extend Picoscan with your own modules in minutes.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🖥️</div>
+      <p class="feat-title">CROSS PLATFORM</p>
+      <p class="feat-desc">Works on Linux, macOS, and Windows without modification. One codebase, every environment.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🔒</div>
+      <p class="feat-title">ZERO DATA LEAKS</p>
+      <p class="feat-desc">100% local processing. Your data never leaves your machine. No telemetry, no callbacks, no surprises.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📦</div>
+      <p class="feat-title">TINY FOOTPRINT</p>
+      <p class="feat-desc">The entire project fits in your pocket. Minimal binary size, minimal dependencies — maximum portability.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="section" id="install">
+  <p class="section-tag">// get started</p>
+  <h2 class="section-heading">Up & Running<br>in <em>Seconds</em></h2>
+  <div class="install-wrap">
+    <div class="install-text">
+      <p>Clone the repository, install dependencies and run. That's genuinely it — Picoscan is designed to get out of your way so you can focus on what matters.</p>
+      <p>No complex configuration. No account required. No license key. Just open-source software that respects your time.</p>
+      <div class="stack-grid" style="margin-top:28px">
+        <a class="btn btn-primary" href="https://github.com/flandreiii/Picoscan" target="_blank">Star on GitHub ★</a>
+        <a class="btn btn-ghost" href="https://github.com/flandreiii/Picoscan/archive/refs/heads/main.zip">Download ZIP</a>
+      </div>
+    </div>
+    <div>
+      <div class="code-block">
+        <div class="code-header">
+          <span>terminal</span>
+          <button class="copy-btn" id="copyBtn">copy</button>
+        </div>
+        <pre id="codeSnippet"><span class="c-dim"># Clone the repo</span>
+<span class="c-acc">$</span> <span class="c-blue">git</span> clone https://github.com/<span class="c-warn">flandreiii</span>/Picoscan.git
+
+<span class="c-dim"># Move into directory</span>
+<span class="c-acc">$</span> <span class="c-blue">cd</span> Picoscan
+
+<span class="c-dim"># Install dependencies</span>
+<span class="c-acc">$</span> <span class="c-blue">pip</span> install -r requirements.txt
+
+<span class="c-dim"># Run Picoscan</span>
+<span class="c-acc">$</span> <span class="c-blue">python</span> picoscan.py
+
+<span class="c-dim"># ✓ Ready to scan.</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section class="section" id="stack">
+  <p class="section-tag">// under the hood</p>
+  <h2 class="section-heading">Tech <em>Stack</em></h2>
+  <div class="stack-grid">
+    <span class="stack-badge">Python</span>
+    <span class="stack-badge">OpenCV</span>
+    <span class="stack-badge">NumPy</span>
+    <span class="stack-badge">PIL / Pillow</span>
+    <span class="stack-badge">ZBar</span>
+    <span class="stack-badge">Git</span>
+    <span class="stack-badge">CLI</span>
+    <span class="stack-badge">MIT License</span>
+  </div>
+  <p style="margin-top:28px;font-size:.8rem;color:var(--muted);font-family:'Space Mono',monospace;">* Update the stack badges to match your actual tech!</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    Built by <a href="https://github.com/flandreiii" target="_blank">flandreiii</a> &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; 2025
+  </div>
+  <div class="footer-links">
+    <a href="https://github.com/flandreiii/Picoscan/issues" target="_blank">Issues</a>
+    <a href="https://github.com/flandreiii/Picoscan/blob/main/README.md" target="_blank">Docs</a>
+    <a href="https://github.com/flandreiii/Picoscan" target="_blank">Source</a>
+  </div>
+</footer>
+
+<script>
+  /* ── Custom Cursor ── */
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top  = my + 'px';
+  });
+  (function animRing() {
+    rx += (mx - rx) * 0.1;
+    ry += (my - ry) * 0.1;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(animRing);
+  })();
+  document.querySelectorAll('a, button').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.style.width = '18px'; cursor.style.height = '18px';
+      cursor.style.background = '#fff';
+      ring.style.width = '52px'; ring.style.height = '52px';
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.style.width = '10px'; cursor.style.height = '10px';
+      cursor.style.background = 'var(--accent)';
+      ring.style.width = '36px'; ring.style.height = '36px';
+    });
+  });
+
+  /* ── QR Grid ── */
+  const pattern = [1,1,1,0,1,1,1, 1,0,1,0,1,0,1, 1,1,1,1,1,1,1, 0,1,0,0,0,1,0, 1,1,1,1,1,1,1, 1,0,1,0,1,0,1, 1,1,1,0,1,1,1];
+  const qr = document.getElementById('qrGrid');
+  pattern.forEach(v => {
+    const d = document.createElement('div');
+    d.className = 'qr-cell ' + (v ? 'on' : 'off');
+    qr.appendChild(d);
+  });
+
+  /* ── Scroll Reveal for cards ── */
+  const cards = document.querySelectorAll('.feat-card');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        const idx = [...cards].indexOf(e.target);
+        setTimeout(() => e.target.classList.add('reveal'), idx * 90);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  cards.forEach(c => obs.observe(c));
+
+  /* ── Counter animation ── */
+  const statEls = document.querySelectorAll('[data-target]');
+  const cObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = +el.dataset.target;
+      if (target === 0) { el.textContent = '~0'; cObs.unobserve(el); return; }
+      let cur = 0;
+      const step = Math.max(1, Math.ceil(target / 45));
+      const t = setInterval(() => {
+        cur = Math.min(cur + step, target);
+        el.textContent = cur;
+        if (cur >= target) clearInterval(t);
+      }, 28);
+      cObs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  statEls.forEach(s => cObs.observe(s));
+
+  /* ── Copy button ── */
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    const text = `git clone https://github.com/flandreiii/Picoscan.git\ncd Picoscan\npip install -r requirements.txt\npython picoscan.py`;
+    navigator.clipboard.writeText(text).then(() => {
+      this.textContent = 'copied!';
+      this.style.borderColor = 'var(--accent)';
+      this.style.color = 'var(--accent)';
+      setTimeout(() => {
+        this.textContent = 'copy';
+        this.style.borderColor = '';
+        this.style.color = '';
+      }, 2000);
+    });
+  });
+
+  /* ── Header compact on scroll ── */
+  window.addEventListener('scroll', () => {
+    document.querySelector('header').style.padding =
+      window.scrollY > 50 ? '12px 48px' : '18px 48px';
+  });
+</script>
+</body>
+</html>
